@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>addCard</title>
+    <link rel="stylesheet" th:href="@{/layui/css/layui.css}">
+    <style>
+        body {
+            padding-top: 10px;
+        }
+        .content {
+            width: 600px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+<div class="content">
+    <form class="layui-form" action="form.html">
+        <div class="layui-form-item">
+            <label class="layui-form-label">文件名</label>
+            <div class="layui-input-block">
+                <input type="text" name="fileName" lay-verify="required" placeholder="请输入" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">文件别称</label>
+            <div class="layui-input-block">
+                <input type="text" name="fileNickName" lay-verify="required" placeholder="请输入" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button id="sub-btn" type="submit" class="layui-btn" lay-submit lay-filter="demo1">立即提交</button>
+                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script th:src="@{/layui/layui.js}"></script>
+<script>
+    layui.use(['form', 'laydate', 'util'], function() {
+        let form = layui.form
+        let layer = layui.layer
+        let $ = layui.jquery
+
+        form.on('submit(demo1)', function(data){
+            $('#sub-btn').attr('disabled', 'disabled').addClass('layui-btn-disabled')
+            let field = data.field; // 获取表单字段值
+            $.ajax({
+                url: '/HS/add',
+                type: 'post',
+                data: JSON.stringify(field),
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                resultType: 'json',
+                success: function (res) {
+                    console.log(res)
+                    if (res.code === 0) {
+                        layer.msg(res.msg, {icon: 1, time: 1000}, function () {
+                            parent.reset()
+                            let iframeIndex = parent.layer.getFrameIndex(window.name)
+                            parent.layer.close(iframeIndex)
+                        })
+                    }else {
+                        layer.msg(res.msg, {icon: 2, time: 1000})
+                        $('#sub-btn').removeAttr('disabled', 'disabled').removeClass('layui-btn-disabled')
+                    }
+                },
+                error: function (err) {
+                    layer.msg(err, {icon: 2, time: 1000})
+                }
+            })
+            return false; // 阻止默认 form 跳转
+        });
+    })
+</script>
+</body>
+</html>
