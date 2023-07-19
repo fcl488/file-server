@@ -3,6 +3,6 @@
 
 .idea
 
-serverProject.iml
+*.iml
 
 /target/
