@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>index</title>
+    <link rel="stylesheet" th:href="@{/layui/css/layui.css}">
+</head>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+    }
+    body {
+        width: 1200px;
+        margin: 0 auto;
+    }
+    .content .banner {
+        margin: 10px 0 10px 10px;
+    }
+</style>
+<body>
+
+<div class="content">
+    <div class="banner">
+        <button id="add-btn" type="button" class="layui-btn layui-btn-primary">添加卡片信息</button>
+        <button id="upload-btn" type="button" class="layui-btn demo-class-accept" lay-options="{accept: 'file'}">
+            <i class="layui-icon layui-icon-upload"></i>
+            上传MMD
+        </button>
+        <button id="refresh" type="submit" class="layui-btn layui-btn-primary"><i class="layui-icon layui-icon-refresh"></i>刷新表格</button>
+    </div>
+    <div class="table-area">
+        <table class="layui-table" id="test" lay-filter="test"></table>
+    </div>
+    <script type="text/html" id="currentTableBar">
+        <a class="layui-btn layui-btn-normal layui-btn-xs data-count-edit" lay-event="download">下载</a>
+        <a class="layui-btn layui-btn-danger layui-btn-xs data-count-edit" lay-event="delete">删除</a>
+    </script>
+</div>
+
+<script th:src="@{/layui/layui.js}"></script>
+<script>
+
+    let originStr = window.location.origin
+
+    function reset() {
+        console.log('重置表格')
+        document.getElementById('refresh').click()
+    }
+
+    layui.use(['table', 'dropdown'], function(){
+        let table = layui.table
+        let $ = layui.jquery
+        let layer = layui.layer
+        let upload = layui.upload
+        table.render({
+            elem: '#test',
+            url: '/HS/list',
+            toolbar: '',
+            defaultToolbar: ['filter', 'exports', 'print', {
+                title: '提示'
+                ,layEvent: 'LAYTABLE_TIPS'
+                ,icon: 'layui-icon-tips'
+            }],
+            cols: [
+                [
+                    {field:'id', width:80, title: '编号'},
+                    {field:'fileName', width:350, title: '文件名'},
+                    {field:'filePath', width:300, title: '文件路径'},
+                    {field:'fileNickName', width:350, title: '文件别名'},
+                    {title: '操作', toolbar: '#currentTableBar', align: 'center'}
+                ]
+            ],
+            limits: [10, 20, 30, 40],
+            limit: 10,
+            page: true,
+            skin: 'line'
+        })
+
+        table.on('tool(test)', function (obj) {
+            let data = obj.data
+            if (obj.event === 'download') {
+                let url = originStr + '/HS/download/' + data.id
+                window.location.href = url
+            }
+            if (obj.event === 'delete') {
+                layer.confirm('确定删除该卡片？', {icon: 3}, function(){
+                    let originStr = window.location.origin
+                    console.log(originStr)
+                    let url = originStr + '/HS/delete/' + data.id
+                    $.ajax({
+                        url: url,
+                        type: 'post',
+                        data: null,
+                        resultType: 'json',
+                        success: function (res) {
+                            console.log(res)
+                            if (res.code === 0) {
+                                layer.msg(res.msg, {icon: 1, time: 1000}, function () {
+                                    reset()
+                                })
+                            }else {
+                                layer.msg(res.msg, {icon: 2, time: 1000})
+                            }
+                        },
+                        error: function (err) {
+                            layer.msg(err, {icon: 2, time: 1000})
+                        }
+                    })
+                }, function(){
+                    // layer.msg('点击取消的回调')
+                })
+            }
+            return false
+        })
+
+        $('#refresh').click(function () {
+            table.reload('test', {
+                page: {
+                    curr: 1
+                }
+            }, 'data')
+            return false
+        })
+
+        $('#add-btn').click(function () {
+            let index = layer.open({
+                title: '卡片信息添加',
+                type: 2,
+                shade: 0.2,
+                maxmin: true,
+                shadeClose: true,
+                area: ['50%', '60%'],
+                content: '/toAddCard'
+            })
+            return false
+        })
+
+        // $('#upload-btn').click(function () {
+        //     let url = originStr + '/mmd/upload'
+        //
+        // })
+
+        upload.render({
+            elem: '#upload-btn', // 绑定多个元素
+            url: originStr + '/mmd/upload', // 此处配置你自己的上传接口即可
+            accept: 'file', // 普通文件
+            done: function(res){
+                if (res.code === 0) {
+                    layer.msg('上传成功')
+                }else {
+                    layer.msg('上传失败')
+                }
+            }
+        })
+    })
+</script>
+</body>
+</html>
